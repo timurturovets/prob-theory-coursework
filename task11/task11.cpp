@@ -478,7 +478,7 @@ static QString styleSheet() {
         "QLabel{color:#e0e0e0;}";
 }
 
-class task2 {
+class task11 {
 public:
     static void run(int argc, char **argv) {
         QApplication app(argc, argv);
@@ -823,6 +823,6 @@ public:
 }
 
 int main(int argc, char **argv) {
-    tasks::task2::run(argc, argv);
+    tasks::task11::run(argc, argv);
     return 0;
 }
