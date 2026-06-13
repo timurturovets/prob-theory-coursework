@@ -4,6 +4,7 @@
 #include <random>
 #include <string>
 #include <vector>
+#include <cmath>
 
 #include <windows.h>
 
@@ -18,7 +19,8 @@ struct Config {
     double p = 0.5;
     double q = 0.5;
     int max_n = 32;
-    double s = 1.0;
+    double s_plus = 1.0;
+    double s_minus = 1.0;
     long long trials = 1000000;
 };
 
@@ -63,8 +65,10 @@ Config parse_json(const std::string &path) {
                 cfg.q = std::stod(val);
             } else if (key == "max_n") {
                 cfg.max_n = std::stoi(val);
-            } else if (key == "s") {
-                cfg.s = std::stod(val);
+            } else if (key == "s_plus") {
+                cfg.s_plus = std::stod(val);
+            } else if (key == "s_minus") {
+                cfg.s_minus = std::stod(val);
             } else if (key == "trials") {
                 cfg.trials = std::stoll(val);
             }
@@ -76,6 +80,7 @@ Config parse_json(const std::string &path) {
 
 void task5::run(int argc, char **argv) {
     std::string config_path = "config.json";
+
     if (argc >= 2) {
         config_path = argv[1];
     }
@@ -88,6 +93,7 @@ void task5::run(int argc, char **argv) {
     }
 
     double pq_sum = cfg.p + cfg.q;
+
     if (pq_sum <= 0.0) {
         std::cerr << "p + q должно быть > 0" << std::endl;
         return;
@@ -101,8 +107,8 @@ void task5::run(int argc, char **argv) {
         return;
     }
 
-    if (cfg.s <= 0.0) {
-        std::cerr << "s должно быть > 0" << std::endl;
+    if (cfg.s_plus <= 0.0 || cfg.s_minus <= 0.0) {
+        std::cerr << "s_plus и s_minus должны быть > 0" << std::endl;
         return;
     }
 
@@ -123,9 +129,9 @@ void task5::run(int argc, char **argv) {
 
         for (int step = 1; step <= cfg.max_n; ++step) {
             if (dist(rng) < cfg.p) {
-                pos += cfg.s;
+                pos += cfg.s_plus;
             } else {
-                pos -= cfg.s;
+                pos -= cfg.s_minus;
             }
 
             if (std::abs(pos) < 1e-9) {
@@ -141,33 +147,54 @@ void task5::run(int argc, char **argv) {
         }
     }
 
-    std::cout << "Параметры: p=" << cfg.p << " q=" << cfg.q
-              << " s=" << cfg.s << " max_n=" << cfg.max_n
-              << " trials=" << cfg.trials << std::endl;
-    std::cout << std::endl;
-    std::cout << "N    P(возврат за N шагов)" << std::endl;
+    std::cout << "Параметры: "
+              << "p=" << cfg.p
+              << " q=" << cfg.q
+              << " s_plus=" << cfg.s_plus
+              << " s_minus=" << cfg.s_minus
+              << " max_n=" << cfg.max_n
+              << " trials=" << cfg.trials
+              << std::endl;
 
-    for (int n = 2; n <= cfg.max_n; n += 2) {
+    std::cout << std::endl;
+    std::cout << "N    P(первое возвращение на N-м шаге)" << std::endl;
+
+    for (int n = 1; n <= cfg.max_n; ++n) {
         double prob = 0.0;
+
         auto it = return_counts.find(n);
         if (it != return_counts.end()) {
             prob = static_cast<double>(it->second) / cfg.trials;
         }
+
         std::cout << n << "    " << prob << std::endl;
     }
 
     std::cout << std::endl;
 
     long long total_returned = 0;
+
     for (auto &kv : return_counts) {
         total_returned += kv.second;
     }
 
-    double p_no_return = static_cast<double>(no_return) / cfg.trials;
-    double p_any_return = static_cast<double>(total_returned) / cfg.trials;
+    double p_any_return =
+        static_cast<double>(total_returned) / cfg.trials;
 
-    std::cout << "P(возврат хотя бы раз за " << cfg.max_n << " шагов) = " << p_any_return << std::endl;
-    std::cout << "P(нет возврата за " << cfg.max_n << " шагов) = " << p_no_return << std::endl;
+    double p_no_return =
+        static_cast<double>(no_return) / cfg.trials;
+
+    std::cout << "P(возврат хотя бы раз за "
+              << cfg.max_n
+              << " шагов) = "
+              << p_any_return
+              << std::endl;
+
+    std::cout << "P(нет возврата за "
+              << cfg.max_n
+              << " шагов) = "
+              << p_no_return
+              << std::endl;
 }
 
 }
